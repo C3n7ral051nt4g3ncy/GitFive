@@ -30,7 +30,7 @@ def guess_custom_domain(runner: GitfiveRunner):
     if hunter and (not google or hunter in google):
         runner.rc.print(f'🔍 [Hunter.io] Found possible domain "{hunter}" for company "{company}"', style="light_green")
         return {hunter}
-    elif hunter and google:
+    elif hunter:
         runner.rc.print(f'🔍 [Hunter.io] Found possible domain "{hunter}" for company "{company}"', style="light_green")
         runner.rc.print(f'🔍 [Google] Found possible domain "{google}" for company "{company}"', style="light_green")
         return {hunter, google}

@@ -40,9 +40,7 @@ class APIInterface():
     async def verify_rate_limit(self, resource, client):
         req = await client.get("https://api.github.com/rate_limit")
         data = json.loads(req.text)
-        if data["resources"][resource]["remaining"]:
-            return True
-        return False
+        return bool(data["resources"][resource]["remaining"])
         
     async def wait_and_reload_client(self, connection_type: str, resource: str):
         while True:
@@ -69,8 +67,7 @@ class APIInterface():
         while True:
             req: httpx.Response = await self.clients[connection_type]["loaded"].get(f"https://api.github.com{url}")
             if self.check_query(req):
-                data = json.loads(req.text)
-                return data
+                return json.loads(req.text)
 
             resource = req.headers["x-ratelimit-resource"]
             await self.wait_and_reload_client(connection_type, resource)

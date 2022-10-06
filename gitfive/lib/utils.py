@@ -21,18 +21,18 @@ from gitfive.lib.banner import banner
 
 
 def is_local_domain(domain: str):
-    return not "." in domain or any([domain.endswith(f".{tld}") for tld in config.local_tlds])
+    return "." not in domain or any(
+        domain.endswith(f".{tld}") for tld in config.local_tlds
+    )
 
 def get_image_hash(img: Image):
     """Return the hash of the pixels of an image"""
-    hash = str(imagehash.average_hash(img))
-    return hash
+    return str(imagehash.average_hash(img))
 
 def fetch_img(url: str):
     """Download an image and return a PIL's Image object."""
     req = httpx.get(url)
-    img = Image.open(BytesIO(req.content))
-    return img
+    return Image.open(BytesIO(req.content))
 
 def extract_domain(url: str, sub_level: int=0):
     if url.startswith('http'):
@@ -46,8 +46,7 @@ def detect_custom_domain(link: str):
         nb_of_dots = link.count('.')
         if nb_of_dots > 3: # Avoiding domains with too much subdomains,
                            # so we only extract longest and shortest domain
-            domains.append(extract_domain(link, 0))
-            domains.append(extract_domain(link, nb_of_dots-1))
+            domains.extend((extract_domain(link, 0), extract_domain(link, nb_of_dots-1)))
         else:
             for sub_level in range(nb_of_dots):
                 domain = extract_domain(link, sub_level)
@@ -63,14 +62,16 @@ def is_diff_low(string1: str, string2: str, limit: int=40):
     first_len = len(string1)
     pourcentage = int(diff/first_len*100)
 
-    if pourcentage <= limit:
-        return True
-    return False
+    return pourcentage <= limit
 
 def is_repo_empty(body: BeautifulSoup):
-    if body.h3 and any(['this repository is empty' in x.text.lower() for x in body.find_all("h3")]):
-        return True
-    return False
+    return bool(
+        body.h3
+        and any(
+            'this repository is empty' in x.text.lower()
+            for x in body.find_all("h3")
+        )
+    )
 
 def get_link_location(domain: str):
     """If the HTTP redirects to HTTPS, it returns the HTTPS link"""
@@ -89,9 +90,7 @@ def is_ghpages_hosted(domain: str):
     except Exception:
         return False
     else:
-        if ip in config.ghpages_servers:
-            return True
-        return False
+        return ip in config.ghpages_servers
 
 def change_permissions(path: Path|str):
     for root, dirs, files in os.walk(path):  
@@ -113,10 +112,7 @@ async def get_commits_count(runner: GitfiveRunner, repo_url: str):
     if not nb_commits_el:
         return False, 0
     nb_commits_str = nb_commits_el.text.split()[0].replace(",", "")
-    if nb_commits_str == "∞":
-        return True, 50000 # Temporary limit, because GitHub hasn't liked my 70k commits
-    nb_commits = int(nb_commits_str)
-    return True, nb_commits
+    return (True, 50000) if nb_commits_str == "∞" else (True, int(nb_commits_str))
 
 def chunks(lst: List[any], n: int):
     """
@@ -145,7 +141,13 @@ def humanize_list(array: List[any]):
 
 def sanatize(text: str) -> str:
     deaccented = unidecode(text, "utf-8")
-    return ''.join([*filter(lambda x:x.lower() in string.ascii_lowercase+" ", deaccented)])
+    return ''.join(
+        [
+            *filter(
+                lambda x: x.lower() in f"{string.ascii_lowercase} ", deaccented
+            )
+        ]
+    )
 
 def get_gists_stats(runner: GitfiveRunner):
     req = httpx.get(f"https://gist.github.com/{runner.target.username}/starred")
@@ -155,8 +157,7 @@ def get_gists_stats(runner: GitfiveRunner):
 
 async def get_ssh_keys(runner: GitfiveRunner):
     req = await runner.as_client.get(f"https://github.com/{runner.target.username}.keys")
-    lines = req.text.strip()
-    if lines:
+    if lines := req.text.strip():
         runner.target.ssh_keys.extend(lines.split("\n"))
 
 def delete_tmp_dir():

@@ -47,14 +47,13 @@ def do_chunk_merge(runner: GitfiveRunner, repo: Repo, genesis_tree_hash: str, al
         runner.tmprinter.out(f"[~] 🐙 Merged {total} commits...")
         args = []
         for hash in hashs_chunk:
-            args.append("-p")
-            args.append(hash)
+            args.extend(("-p", hash))
         commit_hash = repo.git.commit_tree(genesis_tree_hash, '-m', 'CLOSING', *args)
         remaining_hashes.append(commit_hash)
     return do_chunk_merge(runner, repo, genesis_tree_hash, remaining_hashes, total)
 
 async def start(runner: GitfiveRunner, emails: List[str]):
-    temp_repo_name = "GitFive-"+uuid.uuid4().hex[:20]
+    temp_repo_name = f"GitFive-{uuid.uuid4().hex[:20]}"
 
     # Create
     runner.tmprinter.out("[METAMON] 🐙 Creating repo...")
@@ -63,9 +62,9 @@ async def start(runner: GitfiveRunner, emails: List[str]):
     cwd_path = Path().home()
     gitfive_folder = cwd_path / ".malfrats/gitfive"
     gitfive_folder.mkdir(parents=True, exist_ok=True)
-    
+
     if not runner.target.username:
-        temp_folder = "temp-"+uuid.uuid4().hex[:20]
+        temp_folder = f"temp-{uuid.uuid4().hex[:20]}"
         target_user_folder: Path = gitfive_folder / ".tmp" / temp_folder
     else:
         target_user_folder: Path = gitfive_folder / ".tmp" / runner.target.username
@@ -112,7 +111,7 @@ async def start(runner: GitfiveRunner, emails: List[str]):
                 emails_index |= new_indexes
 
     if emails_index:
-        runner.tmprinter.out(f"[METAMON] 🐙 Recursive merge...")
+        runner.tmprinter.out("[METAMON] 🐙 Recursive merge...")
         last_commit_hash = do_chunk_merge(runner, repo, genesis_tree_hash, list(emails_index.keys()))
 
         commit = repo.commit(last_commit_hash)

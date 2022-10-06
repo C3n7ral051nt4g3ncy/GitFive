@@ -55,20 +55,27 @@ async def guess(runner: GitfiveRunner):
         if username in target["followers"]:
             users = update_close_friends(username, users, "Follower + Following")
 
-    users = {k: v for k, v in sorted(users.items(), key=lambda item: item[1]["points"], reverse=True)} # Sort by points
+    users = dict(
+        sorted(users.items(), key=lambda item: item[1]["points"], reverse=True)
+    )
+
     return users
 
 def show(runner: GitfiveRunner):
-    users = runner.target.potential_friends
-    if users:
+    if users := runner.target.potential_friends:
         runner.rc.print(f"[+] {len(users)} potential close friend{'s' if len(users) > 1 else ''} found !", style="light_green")
 
-        points = sorted(list(set([x["points"] for x in list(users.values())])), reverse=True)
-        for point in points :
-            to_show = []
-            for username in users:
-                if users[username]["points"] == point:
-                    to_show.append(username)
+        points = sorted(
+            list({x["points"] for x in list(users.values())}), reverse=True
+        )
+
+        for point in points:
+            to_show = [
+                username
+                for username in users
+                if users[username]["points"] == point
+            ]
+
             print(f"\nClose friend{'s' if len(to_show) > 1 else ''} with {point} point{'s' if point > 1 else ''} :")
             for username in to_show[:14]:
                 print(f"- {username} ({', '.join(users[username]['reasons'])})")

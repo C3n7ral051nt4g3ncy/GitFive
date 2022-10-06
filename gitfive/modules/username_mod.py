@@ -102,7 +102,7 @@ async def hunt(username: str, json_file="", runner: GitfiveRunner=None):
         out = guess_custom_domain(runner)
         for company_domain in out:
             domains = set(detect_custom_domain(company_domain))
-            for domain in domains:
+            for _ in domains:
                 runner.target.domains.add(company_domain)
 
     if runner.target.blog:
@@ -148,7 +148,7 @@ async def hunt(username: str, json_file="", runner: GitfiveRunner=None):
             if org["email"] and "@" in org["email"]:
                 domains = detect_custom_domain(org["email"].split("@")[-1])
                 for dom in domains:
-                    if not dom in runner.target.domains:
+                    if dom not in runner.target.domains:
                         runner.rc.print(f"Adding domain -> {dom}", style="italic")
                         runner.target.domains.update(domains)
 
@@ -171,7 +171,7 @@ async def hunt(username: str, json_file="", runner: GitfiveRunner=None):
         emails_accounts = {}
         if emails_index:
             emails_accounts = await commits.scrape(runner, temp_repo_name, emails_index)
-        
+
         runner.target.registered_emails |= emails_accounts
 
         new_usernames = False
@@ -199,7 +199,7 @@ async def hunt(username: str, json_file="", runner: GitfiveRunner=None):
     # Delete
     runner.rc.print("\n[+] Deleted the remote repo", style="italic")
     await github.delete_repo(runner, temp_repo_name)
-    
+
     if json_file:
         import json
         with open(json_file, "w", encoding="utf-8") as f:
@@ -208,4 +208,5 @@ async def hunt(username: str, json_file="", runner: GitfiveRunner=None):
 
     runner.tmprinter.out("Deleting temp folder...")
     from gitfive.lib.utils import delete_tmp_dir; delete_tmp_dir()
+    delete_tmp_dir()
     runner.tmprinter.clear()

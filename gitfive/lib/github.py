@@ -61,18 +61,14 @@ async def fetch_profile_name(runner: GitfiveRunner, username: str):
     headers = {"X-Requested-With": "XMLHttpRequest", **runner.as_client.headers}
     req = await runner.as_client.get(f"https://github.com/users/{username}/hovercard", headers=headers)
     body = BeautifulSoup(req.text, 'html.parser')
-    
+
     fields = [x.text.strip() for x in body.find("section", {"aria-label": "user login and name"}).find_all("a")]
-    if len(fields) < 2:
-        return False
-    
-    return fields[1]
+    return False if len(fields) < 2 else fields[1]
 
 async def get_original_branch_from_commit(runner: GitfiveRunner, commit: str, username: str, repo_name: str):
     req = await runner.as_client.get(f"https://github.com/{username}/{repo_name}/branch_commits/{commit}")
     body = BeautifulSoup(req.text, 'html.parser')
-    branch = body.find("li", "branch").text.strip()
-    if branch:
+    if branch := body.find("li", "branch").text.strip():
         return branch
     exit(f"[-] Error : branch not found for this repo and commit : {username}/{repo_name} - {commit}")
 

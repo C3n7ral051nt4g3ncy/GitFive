@@ -16,9 +16,7 @@ async def fetch_avatar(runner: GitfiveRunner, email: str, avatar_link: str, user
     async with runner.limiters["commits_fetch_avatar"]:
         is_target = (username.lower() == runner.target.username.lower())
         full_name = await github.fetch_profile_name(runner, username)
-        _name_str = ""
-        if full_name:
-            _name_str = f" [{full_name}]"
+        _name_str = f" [{full_name}]" if full_name else ""
         if is_target:
             if check_only:
                 runner.rc.print(f"[+] [Target's email] 🐱 {email} -> @{username}{_name_str}", style="cyan")
@@ -46,7 +44,7 @@ async def fetch_commits(runner: GitfiveRunner, repo_name: str, emails_index: Dic
         body = BeautifulSoup(req.text, 'html.parser')
 
         commits = body.find_all("li", {"class": "js-commits-list-item"})
-        
+
         async with trio.open_nursery() as nursery:
             for commit in commits:
                 hexsha = commit.find("a", {"class": "js-navigation-open"}).attrs["href"].split("/")[-1]
@@ -57,7 +55,7 @@ async def fetch_commits(runner: GitfiveRunner, repo_name: str, emails_index: Dic
                 email = emails_index[hexsha]
                 avatar_link = avatar.get("src")
                 username = avatar.get("alt")[1:] # We remove the "@" at the beginning
-                
+
                 nursery.start_soon(fetch_avatar, runner, email, avatar_link, username, out, check_only)
 
 async def scrape(runner: GitfiveRunner, repo_name: str, emails_index: Dict[str, str], check_only=False):

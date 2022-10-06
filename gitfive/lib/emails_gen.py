@@ -81,8 +81,8 @@ def generate(runner: GitfiveRunner, custom_domains_list=[], default_domains_list
             for reverse in [False, True]:
                 first_pos = last_name if reverse else first_name
                 second_pos = first_name if reverse else last_name
-                for nb_first in range(0, len(first_name)+1):
-                    for nb_second in range(0, len(last_name)+1):
+                for nb_first in range(len(first_name)+1):
+                    for nb_second in range(len(last_name)+1):
                         total = nb_first + nb_second
                         if not total or (nb_first < 2 and nb_second < 2):
                             continue

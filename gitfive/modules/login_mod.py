@@ -9,7 +9,7 @@ async def check_and_login(clean=False):
             print(f"[+] Credentials file at {creds.creds_path} deleted !")
         else:
             print(f"Credentials file at {creds.creds_path} doesn't exists, no need to delete.")
-        
+
         if creds.session_path.is_file():
             creds.session_path.unlink()
             print(f"[+] Session file at {creds.session_path} deleted !")
@@ -23,9 +23,7 @@ async def check_and_login(clean=False):
         print("[+] Creds are working !")
         choice = ""
         while choice.lower() not in ["y", "n"]:
-            choice = input("Do you want to re-login anyway ? (Y/n) : ")
-            if not choice: # default choice
-                choice = "y"
+            choice = input("Do you want to re-login anyway ? (Y/n) : ") or "y"
         if choice == "y":
             print()
             creds.__init__()

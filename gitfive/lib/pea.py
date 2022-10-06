@@ -28,18 +28,15 @@ async def analyze(runner: GitfiveRunner, usernames: set):
 
             trio.lowlevel.remove_instrument(instrument)
 
-    else:
-        if usernames:
-            await is_pea(runner, usernames[0], users)
+    elif usernames:
+        await is_pea(runner, usernames[0], users)
 
     return users
 
 async def is_pea(runner: GitfiveRunner, username: str, users: Dict[str, bool]):
-    if not await has_many_stars_or_repos(runner, username) and \
-        not await is_followed_or_following_a_lot(runner, username):
-        users[username] = True
-    else:
-        users[username] = False
+    users[username] = not await has_many_stars_or_repos(
+        runner, username
+    ) and not await is_followed_or_following_a_lot(runner, username)
 
 async def is_followed_or_following_a_lot(runner: GitfiveRunner, username: str):
     """
@@ -55,9 +52,7 @@ async def is_followed_or_following_a_lot(runner: GitfiveRunner, username: str):
         following = body.find("a", href=f"/{username}?tab=following")
         following = int(following.text.replace('k', '00').replace('.', '').split(' ')[0].strip('\n')) if following else 0
 
-        if followers >= 20 or following >= 50:
-            return True
-        return False
+        return followers >= 20 or following >= 50
 
 async def has_many_stars_or_repos(runner: GitfiveRunner, username: str):
     """
@@ -82,14 +77,12 @@ async def has_many_stars_or_repos(runner: GitfiveRunner, username: str):
 
     stargazers = await launch_repo_queries(runner, username, body)
 
-    if len(stargazers) >= 2:
-        return True
-    return False
+    return len(stargazers) >= 2
 
 async def launch_repo_queries(runner: GitfiveRunner, username: str, body: BeautifulSoup):
     async with runner.limiters["pea_repos"]: # x10 tasks max
         repos_page_limiter = trio.CapacityLimiter(5) # spawning x5 task max per child task
-        
+
         total_repos = int(body.find("div", "user-repo-search-results-summary").text.replace('\n', '').replace(',', '').split()[0])
         if not total_repos:
             return False
@@ -138,5 +131,9 @@ async def extract_first_stargazers(runner: GitfiveRunner, username: str, repo_na
     body = BeautifulSoup(req.text, 'html.parser')
 
     stargazers_list = body.find_all('li', 'follow-list-item')
-    stargazers = {sg for x in stargazers_list if (sg := x.find('h3', 'follow-list-name').text.lower()) != username.lower()}
-    return stargazers
+    return {
+        sg
+        for x in stargazers_list
+        if (sg := x.find('h3', 'follow-list-name').text.lower())
+        != username.lower()
+    }
